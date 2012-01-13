@@ -3,7 +3,11 @@ START_Y = 224
 MOAISim.openWindow ( "Kitteh! Go!", 320, 480 )
 
 viewport = MOAIViewport.new ()
-viewport:setSize ( 320, 480 )
+if MOAIEnvironment.isRetinaDisplay () then
+	viewport:setSize ( 640, 960 )
+else
+	viewport:setSize ( 320, 480 )
+end
 viewport:setScale ( 320, -480 )
 
 layer = MOAILayer2D.new ()
@@ -50,12 +54,14 @@ gfxQuad:setRect ( -16, -16, 16, 16 )
 gfxQuad:setUVRect ( 0, 0, 1, 1 )
 
 kitteh = MOAIProp2D.new ()
+kitteh.alive = true
 kitteh:setDeck ( gfxQuad )
 kitteh:setLoc ( 16, START_Y )
 layer:insertProp ( kitteh )
 
 gameWon = false
-car1 = nil
+
+cars = {}
 
 math.randomseed( os.time() )
 
@@ -64,21 +70,43 @@ function distance ( x1, y1, x2, y2 )
 	return math.sqrt ((( x2 - x1 ) ^ 2 ) + (( y2 - y1 ) ^ 2 ))
 end
 
+function wait ( action )
+    while action:isBusy () do coroutine:yield () end
+end
+
+function crazyFunc ()
+    kitteh:moveRot ( 360, 2 )
+    wait ( kitteh:moveScl ( 0.5, 0.5, 0.75 ))
+    kitteh:moveScl ( -0.5, -0.5, 0.75 )
+end
+
 function addCar ()
 	
 	local row = math.random(4)
 	
 	local car = MOAIProp2D.new ()
 	car:setDeck ( carQuad )
-	car:setLoc ( -180, row * 16 )
+	car:setLoc ( -180, 8 + row * 32 )
+	cars [ car ] = car
+	
 	layer:insertProp ( car )
 	
-	car:moveLoc( 380, 0, 15, MOAIEaseType.LINEAR )	
+	--
+	function car:main ()
+		MOAIThread.blockOnAction ( self:seekLoc ( 380, 8 + row * 32, 6 + row*2, MOAIEaseType.LINEAR ))
+		layer:removeProp ( car )
+		cars [ car ] = nil
+	end
 	
-	return car
+	car.thread = MOAIThread.new ()
+	car.thread:run ( car.main, car )
 end
 
 function clickCallback ( down )
+	if not kitteh.alive then
+		return
+	end
+		
 	if down then
 		kitteh:moveScl ( -0.25, -0.25, 0.125, MOAIEaseType.EASE_IN )
 	else
@@ -94,7 +122,8 @@ function clickCallback ( down )
 				cell = grid:getTile ( cx, cy )
 				if cell == 3 then
 					gameWon = true
-					kitteh:moveRot ( 360, 1.5 )				
+					local t = MOAIThread.new ()
+					t:run ( crazyFunc )
 				end
 			end
 		end
@@ -112,28 +141,34 @@ MOAIInputMgr.device.touch:setCallback (
   end
 )
 
-car1 = addCar ()
-frame = 0
-resetCounter = 0
-
 function threadFunc ()
 
+	addCar ()
+
+	local frame = 0
+	local resetCounter = 0
+	
 	while not gameWon do
 		frame = frame + 1
 		coroutine.yield ()
 
-		local x1, y1 = kitteh:getLoc ()
-		local x2, y2 = car1:getLoc ()
+		for car in pairs (cars) do
+			local x1, y1 = kitteh:getLoc ()
+			local x2, y2 = car:getLoc ()
+			
+			if distance ( x1,y1, x2,y2 ) < 30 and resetCounter < frame then
+				resetCounter = frame + 60
+				kitteh.alive = false
+			end
+		end
 		
-		if distance ( x1,y1, x2,y2 ) < 32 and resetCounter < frame then
-			print 'hit'
-			resetCounter = frame + 60
-			kitteh:seekColor ( 1, 0, 0, 1, 0.5 )
+		if (frame % 90 == 0) then
+			addCar ()
 		end
 		
 		if resetCounter == frame then
-			print 'respawn'
 			kitteh:setLoc ( 16, START_Y )
+			kitteh.alive = true
 		end
 	end
 end
