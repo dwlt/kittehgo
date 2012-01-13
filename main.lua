@@ -10,17 +10,6 @@ layer = MOAILayer2D.new ()
 layer:setViewport ( viewport )
 MOAISim.pushRenderPass ( layer )
 
-screenWidth, screenHeight = MOAIEnvironment.getScreenSize ()
-print ( 'screen:\t', screenWidth, screenHeight )
-
-viewWidth, viewHeight = MOAIEnvironment.getViewSize ()
-print ( 'view:\t', viewWidth, viewHeight )
-
-if MOAIEnvironment.isRetinaDisplay () then
-	print ( 'retina display' )
-end
-
-
 grid = MOAIGrid.new ()
 grid:setSize ( 10, 15, 32, 32 )
 
