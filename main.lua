@@ -60,14 +60,27 @@ kitteh:setDeck ( gfxQuad )
 kitteh:setLoc ( 16, START_Y )
 layer:insertProp ( kitteh )
 
+gameWon = false
+
 function clickCallback ( down )
 	if down then
 		kitteh:moveScl ( -0.25, -0.25, 0.125, MOAIEaseType.EASE_IN )
 	else
 		kitteh:moveScl ( 0.25, 0.25, 0.125, MOAIEaseType.EASE_IN )
-		local x, y = kitteh:getLoc ()
-		if ( y > -208 ) then
-			kitteh:seekLoc ( x, y-32, 0.125, MOAIEaseType.LINEAR )
+		if gameWon then
+			kitteh:moveRot ( 360, 1.5, MOAIEaseType.EASE_IN )
+		else
+			local x, y = kitteh:getLoc ()
+			if ( y > -208 ) then
+				kitteh:seekLoc ( x, y-32, 0.125, MOAIEaseType.LINEAR )			
+				cx = (x + 16 + 160) / 32
+				cy = (y + 224) / 32
+				cell = grid:getTile ( cx, cy )
+				if cell == 3 then
+					gameWon = true
+					kitteh:moveRot ( 360, 1.5 )				
+				end
+			end
 		end
 	end
 end
