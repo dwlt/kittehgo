@@ -39,6 +39,11 @@ background:setGrid ( grid )
 background:setLoc ( -160, -240 )
 layer:insertProp ( background )
 
+carQuad = MOAIGfxQuad2D.new ()
+carQuad:setTexture ( "car.png" )
+carQuad:setRect ( -24, -16, 24, 16 )
+carQuad:setUVRect ( 0, 0, 1, 1 )
+
 gfxQuad = MOAIGfxQuad2D.new ()
 gfxQuad:setTexture ( "cathead.png" )
 gfxQuad:setRect ( -16, -16, 16, 16 )
@@ -50,6 +55,28 @@ kitteh:setLoc ( 16, START_Y )
 layer:insertProp ( kitteh )
 
 gameWon = false
+car1 = nil
+
+math.randomseed( os.time() )
+
+function distance ( x1, y1, x2, y2 )
+ 
+	return math.sqrt ((( x2 - x1 ) ^ 2 ) + (( y2 - y1 ) ^ 2 ))
+end
+
+function addCar ()
+	
+	local row = math.random(4)
+	
+	local car = MOAIProp2D.new ()
+	car:setDeck ( carQuad )
+	car:setLoc ( -180, row * 16 )
+	layer:insertProp ( car )
+	
+	car:moveLoc( 380, 0, 15, MOAIEaseType.LINEAR )	
+	
+	return car
+end
 
 function clickCallback ( down )
 	if down then
@@ -84,3 +111,32 @@ MOAIInputMgr.device.touch:setCallback (
     end
   end
 )
+
+car1 = addCar ()
+frame = 0
+resetCounter = 0
+
+function threadFunc ()
+
+	while not gameWon do
+		frame = frame + 1
+		coroutine.yield ()
+
+		local x1, y1 = kitteh:getLoc ()
+		local x2, y2 = car1:getLoc ()
+		
+		if distance ( x1,y1, x2,y2 ) < 32 and resetCounter < frame then
+			print 'hit'
+			resetCounter = frame + 60
+			kitteh:seekColor ( 1, 0, 0, 1, 0.5 )
+		end
+		
+		if resetCounter == frame then
+			print 'respawn'
+			kitteh:setLoc ( 16, START_Y )
+		end
+	end
+end
+
+thread = MOAIThread.new ()
+thread:run ( threadFunc )
