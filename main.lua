@@ -131,15 +131,20 @@ function clickCallback ( down )
 end
 
 
-MOAIInputMgr.device.touch:setCallback ( 
-  function ( eventType, idx, x, y, tapCount )
-    if eventType == MOAITouchSensor.TOUCH_DOWN then
-      clickCallback ( true )
-    elseif eventType == MOAITouchSensor.TOUCH_UP then
-      clickCallback ( false )
-    end
-  end
-)
+if MOAIInputMgr.device.pointer then
+  -- mouse input
+  MOAIInputMgr.device.mouseLeft:setCallback ( clickCallback )
+else
+	MOAIInputMgr.device.touch:setCallback ( 
+	  function ( eventType, idx, x, y, tapCount )
+	    if eventType == MOAITouchSensor.TOUCH_DOWN then
+	      clickCallback ( true )
+	    elseif eventType == MOAITouchSensor.TOUCH_UP then
+	      clickCallback ( false )
+	    end
+	  end
+	)
+end
 
 function threadFunc ()
 
