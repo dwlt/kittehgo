@@ -164,6 +164,7 @@ function threadFunc ()
 			if distance ( x1,y1, x2,y2 ) < 30 and resetCounter < frame then
 				resetCounter = frame + 60
 				kitteh.alive = false
+				kitteh:setVisible ( false )				
 			end
 		end
 		
@@ -174,6 +175,7 @@ function threadFunc ()
 		if resetCounter == frame then
 			kitteh:setLoc ( 16, START_Y )
 			kitteh.alive = true
+			kitteh:setVisible ( true )
 		end
 	end
 end
